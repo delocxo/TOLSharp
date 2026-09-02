@@ -4,7 +4,13 @@
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            if (args.Length < 1)
+            {
+                Console.Error.WriteLine("Usage: TOLSharp <filepath.tol>");
+                Environment.Exit(1);
+            }
+
+            Intepreter.Run(args[0]);
         }
     }
 }

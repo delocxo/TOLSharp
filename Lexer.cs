@@ -15,6 +15,15 @@ namespace TOLSharp
             { "True", TokenType.True },
             { "False", TokenType.False },
             { "Null", TokenType.Null },
+            { "if", TokenType.If },
+            { "else", TokenType.Else },
+            { "elseif", TokenType.ElseIf },
+            { "end", TokenType.End },
+            { "while", TokenType.While },
+            { "continue", TokenType.Continue },
+            { "break", TokenType.Break },
+            { "leave", TokenType.Leave },
+            { "exit", TokenType.Exit }
         };
 
         static Dictionary<string, TokenType> s_symbols = new Dictionary<string, TokenType>()

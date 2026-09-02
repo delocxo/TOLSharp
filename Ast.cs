@@ -97,6 +97,18 @@ namespace TOLSharp
         public TokenType Op { get; }
     }
 
+    internal class IfBranch
+    {
+        public IfBranch(Expr expr, List<Stmt> body)
+        {
+            Expr = expr;
+            Body = body;
+        }
+
+        public Expr Expr { get; }
+        public List<Stmt> Body { get; }
+    }
+
     internal abstract class Stmt
     {
         public Stmt(Position position, bool allowedInImport)
@@ -119,5 +131,59 @@ namespace TOLSharp
 
         public string Name { get; }
         public Expr Expr { get; }
+    }
+
+    internal class IfStmt : Stmt
+    {
+        public IfStmt(List<IfBranch> branches, List<Stmt>? elseBody, Position position) : base(position, false)
+        {
+            Branches = branches;
+            ElseBody = elseBody;
+        }
+
+        public List<IfBranch> Branches { get; }
+        public List<Stmt>? ElseBody { get; }
+    }
+
+    internal class WhileStmt : Stmt
+    {
+        public WhileStmt(IfBranch branch, List<Stmt>? elseBody, Position position) : base(position, false)
+        {
+            Branch = branch;
+            ElseBody = elseBody;
+        }
+
+        public IfBranch Branch { get; }
+        public List<Stmt>? ElseBody { get; }
+    }
+
+    internal class BreakStmt : Stmt
+    {
+        public BreakStmt(Expr? condition, Position position) : base(position, false)
+        {
+            Condition = condition;
+        }
+
+        public Expr? Condition { get; }
+    }
+
+    internal class ContinueStmt : Stmt
+    {
+        public ContinueStmt(Expr? condition, Position position) : base(position, false)
+        {
+            Condition = condition;
+        }
+
+        public Expr? Condition { get; }
+    }
+
+    internal class LeaveStmt : Stmt
+    {
+        public LeaveStmt(Expr? condition, Position position) : base(position, false)
+        {
+            Condition = condition;
+        }
+
+        public Expr? Condition { get; }
     }
 }

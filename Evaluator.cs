@@ -68,5 +68,11 @@ namespace TOLSharp
 
             throw new UnreachableException();
         }
+
+        public static bool ExprIsTruthy(Expr expr, Scope scope)
+        {
+            Value value = Evaluate(expr, scope);
+            return ValueFunctions.IsTruthy(value);
+        }
     }
 }

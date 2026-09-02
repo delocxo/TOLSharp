@@ -8,7 +8,8 @@ namespace TOLSharp
     {
         String, Int, Float, Identifier,
 
-        True, False, Null,
+        True, False, Null, If, Else, ElseIf,
+        End, While, Continue, Break, Leave, Exit,
 
         Add, Sub, Mul, Div, Mod,
         IsEqual, NotEqual, Less, Greater,

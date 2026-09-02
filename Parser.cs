@@ -38,6 +38,22 @@ namespace TOLSharp
         {
             if (Check(TokenType.Identifier))
                 return ParseIdentifier();
+
+            else if (Check(TokenType.If))
+                return ParseIf();
+
+            else if (Check(TokenType.While))
+                return ParseWhile();
+
+            else if (Check(TokenType.Break))
+                return ParseBreak();
+
+            else if (Check(TokenType.Continue))
+                return ParseContinue();
+
+            else if (Check(TokenType.Leave))
+                return ParseLeave();
+
             throw ThrowUnexpected();
         }
 
@@ -57,6 +73,117 @@ namespace TOLSharp
                 return new VarStmt(nameExpr.Name, expr, position);
 
             throw new Error("Invalid assign target", position);
+        }
+
+        IfStmt ParseIf()
+        {
+            Position position = Current().Position;
+
+            Next();
+
+            SkipNewlines();
+
+            List<IfBranch> branches = new List<IfBranch>();
+
+            Expr condition = ParseExpr();
+
+            Expect(TokenType.NewLine);
+
+            List<Stmt> body = ParseBodyUtil(TokenType.Else, TokenType.ElseIf, TokenType.End);
+
+            branches.Add(new IfBranch(condition, body));
+
+            while (Match(TokenType.ElseIf))
+            {
+                Expr elseIfCondition = ParseExpr();
+
+                Expect(TokenType.NewLine);
+
+                List<Stmt> elseIfbody = ParseBodyUtil(TokenType.Else, TokenType.ElseIf, TokenType.End);
+
+                branches.Add(new IfBranch(elseIfCondition, elseIfbody));
+            }
+
+            List<Stmt>? elseBody = null;
+
+            if (Match(TokenType.Else))
+            {
+                Expect(TokenType.NewLine);
+                elseBody = ParseBodyUtil(TokenType.Else, TokenType.ElseIf, TokenType.End);
+            }
+
+            Expect(TokenType.End);
+
+            return new IfStmt(branches, elseBody, position);
+        }
+
+        WhileStmt ParseWhile()
+        {
+            Position position = Current().Position;
+
+            Next();
+
+            SkipNewlines();
+
+            Expr condition = ParseExpr();
+
+            Expect(TokenType.NewLine);
+
+            List<Stmt> body = ParseBodyUtil(TokenType.Else, TokenType.ElseIf, TokenType.End);
+
+            IfBranch branch = new IfBranch(condition, body);
+
+            List<Stmt>? elseBody = null;
+
+            if (Match(TokenType.Else))
+            {
+                Expect(TokenType.NewLine);
+                elseBody = ParseBodyUtil(TokenType.Else, TokenType.ElseIf, TokenType.End);
+            }
+
+            Expect(TokenType.End);
+
+            return new WhileStmt(branch, elseBody, position);
+        }
+
+        BreakStmt ParseBreak()
+        {
+            Position position = Current().Position;
+
+            Next();
+
+            Expr? conditon = TryParsePostfixIf();
+
+            return new BreakStmt(conditon, position);
+        }
+
+        ContinueStmt ParseContinue()
+        {
+            Position position = Current().Position;
+
+            Next();
+
+            Expr? conditon = TryParsePostfixIf();
+
+            return new ContinueStmt(conditon, position);
+        }
+
+
+        LeaveStmt ParseLeave()
+        {
+            Position position = Current().Position;
+
+            Next();
+
+            Expr? conditon = TryParsePostfixIf();
+
+            return new LeaveStmt(conditon, position);
+        }
+        Expr? TryParsePostfixIf()
+        {
+            if (Match(TokenType.If))
+                return ParseExpr();
+            return null;
         }
 
         Error ThrowUnexpected()
@@ -93,6 +220,26 @@ namespace TOLSharp
 
         //    return stmts;
         //}
+
+        List<Stmt> ParseBodyUtil(params TokenType[] types)
+        {
+            List<Stmt> stmts = new List<Stmt>();
+
+            while (true)
+            {
+                SkipNewlines();
+
+                if (!NotAtEnd())
+                    break;
+
+                if (Check(types))
+                    break;
+
+                stmts.Add(ParseStmt());
+            }
+
+            return stmts;
+        }
 
         List<string> ParseNames(TokenType end)
         {

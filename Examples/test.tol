@@ -1,1 +1,4 @@
-x = 100
+if True
+	leave if !Null;
+	x = 10 * "";
+end

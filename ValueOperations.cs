@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -200,6 +201,63 @@ namespace TOLSharp
                 return left;
 
             return Evaluator.Evaluate(rightExpr, scope);
+        }
+
+        public static Value IndexGet(Value target, Value index, Position position)
+        {
+            if (!target.IsKind(ValueKind.List) && !target.IsKind(ValueKind.String))
+                throw new Error($"{target.KindName} cannot be index read", position);
+
+            if (!index.IsKind(ValueKind.Int))
+                throw new Error($"{index.KindName} cannot be used an indexer", position);
+
+            long rawIndex = index.Int;
+
+            if (rawIndex < 0)
+                throw new Error("Indexer cannot be less than zero", position);
+
+            if (target.IsKind(ValueKind.List))
+            {
+                ListObject list = target.ListObject;
+
+                if (rawIndex >= list.Count)
+                    throw new Error("Indexer is more than or equal to the list count", position);
+
+                return list.Values[(int)rawIndex];
+            }
+            else
+            {
+                string str = target.String;
+
+                if (rawIndex >= str.Length)
+                    throw new Error("Indexer is more than or equal to the string length", position);
+
+                return new Value(str[(int)rawIndex].ToString());
+            }
+        }
+
+        public static void IndexSet(Value target, Value index, Value value, Position position)
+        {
+            if (!target.IsKind(ValueKind.List))
+                throw new Error($"{target.KindName} cannot be index set", position);
+
+            if (!index.IsKind(ValueKind.Int))
+                throw new Error($"{index.KindName} cannot be used an indexer", position);
+
+            long rawIndex = index.Int;
+
+            if (rawIndex < 0)
+                throw new Error("Indexer cannot be less than zero", position);
+
+            if (target.IsKind(ValueKind.List))
+            {
+                ListObject list = target.ListObject;
+
+                if (rawIndex >= list.Count)
+                    throw new Error("Indexer is more than or equal to the list count", position);
+
+                list.Values[(int)rawIndex] = value;
+            }
         }
 
         static Error UnaryError(Value value, string @operator, Position position)

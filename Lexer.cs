@@ -23,7 +23,11 @@ namespace TOLSharp
             { "continue", TokenType.Continue },
             { "break", TokenType.Break },
             { "leave", TokenType.Leave },
-            { "exit", TokenType.Exit }
+            { "exit", TokenType.Exit },
+            { "export", TokenType.Export },
+            { "action", TokenType.Action },
+            { "await", TokenType.Await },
+            { "spawn", TokenType.Spawn }
         };
 
         static Dictionary<string, TokenType> s_symbols = new Dictionary<string, TokenType>()
@@ -51,7 +55,8 @@ namespace TOLSharp
             { ")", TokenType.RightParen },
             { ",", TokenType.Comma },
             { ".", TokenType.Period },
-            { "#", TokenType.Hash }
+            { "#", TokenType.Hash },
+            { "=>", TokenType.Arrow }
         };
 
         public static string? GetKeywordFromType(TokenType type)

@@ -13,7 +13,7 @@ namespace TOLSharp
                 if (stmt is VarStmt varStmt)
                 {
                     Value value = Evaluator.Evaluate(varStmt.Expr, scope);
-                    scope.Define(varStmt.Name, value);
+                    scope.Define(varStmt.Name, value, varStmt.Position);
                 }
 
                 if (stmt is IfStmt ifStmt)
@@ -30,8 +30,9 @@ namespace TOLSharp
                             try
                             {
                                 Execute(branch.Body, scope);
+                                break;
                             }
-                            catch (LeaveSignal) { }
+                            catch (LeaveSignal) { break; }
                         }
                     }
 
@@ -109,6 +110,33 @@ namespace TOLSharp
                     else
                         throw new LeaveSignal();
                 }
+
+                if (stmt is ExportStmt exportStmt)
+                {
+                    Value value = exportStmt.Expr != null ? Evaluator.Evaluate(exportStmt.Expr, scope) : Value.Null;
+                    if (exportStmt.Condition != null)
+                    {
+                        if (Evaluator.ExprIsTruthy(exportStmt.Condition, scope))
+                            throw new ExportSignal(value);
+                    }
+                    else
+                        throw new ExportSignal(value);
+                }
+
+                if (stmt is ActionStmt actionStmt)
+                    RuntimeDeclarations.DefineAction(actionStmt, scope);
+
+                if (stmt is ExprStmt exprStmt)
+                    Evaluator.Evaluate(exprStmt.Expr, scope);
+
+                if (stmt is IndexSetStmt indexSetStmt)
+                {
+                    Value target = Evaluator.Evaluate(indexSetStmt.IndexGetExpr.Indexee, scope);
+                    Value index = Evaluator.Evaluate(indexSetStmt.IndexGetExpr.Index, scope);
+                    Value value = Evaluator.Evaluate(indexSetStmt.Expr, scope);
+                    ValueOperations.IndexSet(target, index, value, indexSetStmt.Position);
+                }
+                
             }
         }
 
@@ -131,11 +159,19 @@ namespace TOLSharp
                 SematicChecks sematicChecks = new SematicChecks();
                 sematicChecks.Check(ast);
 
-                Execute(ast, new Scope(null));
+                Scope scope = new Scope(null);
+
+                new CoreNatives().Register(scope, null);
+
+                Execute(ast,scope);
             }
             catch (Error error)
             {
                 error.Exit();
+            }
+            catch (ExportSignal)
+            {
+                return;
             }
             catch (Exception e)
             {

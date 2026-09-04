@@ -10,6 +10,7 @@ namespace TOLSharp
 
         True, False, Null, If, Else, ElseIf,
         End, While, Continue, Break, Leave, Exit,
+        Export, Action, Await, Spawn,
 
         Add, Sub, Mul, Div, Mod,
         IsEqual, NotEqual, Less, Greater,
@@ -17,7 +18,7 @@ namespace TOLSharp
 
         Equal, LeftBracket, RightBracket,
         LeftBrace, RightBrace, LeftParen, RightParen,
-        Comma, Period, Hash, Colon,
+        Comma, Period, Hash, Colon, Arrow,
 
         Eof, Tab, NewLine
     }

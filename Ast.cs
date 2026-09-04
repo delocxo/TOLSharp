@@ -97,6 +97,74 @@ namespace TOLSharp
         public TokenType Op { get; }
     }
 
+    internal class CallExpr : Expr
+    {
+        public CallExpr(Expr callee, List<Expr> arguments, Position position) : base(position)
+        {
+            Callee = callee;
+            Arguments = arguments;
+        }
+
+        public Expr Callee { get; }
+        public List<Expr> Arguments { get; }
+    }
+
+    internal class SpawnExpr : Expr
+    {
+        public SpawnExpr(Expr expr, Position position) : base(position)
+        {
+            Expr = expr;
+        }
+
+        public Expr Expr { get; }
+    }
+
+    internal class AwaitExpr : Expr
+    {
+        public AwaitExpr(Expr expr, Position position) : base(position)
+        {
+            Expr = expr;
+        }
+
+        public Expr Expr { get; }
+    }
+
+    internal class ConditionalExpr : Expr
+    {
+        public ConditionalExpr(Expr expr, Expr condition, Expr? @else, Position position) : base(position)
+        {
+            Expr = expr;
+            Condition = condition;
+            Else = @else;
+        }
+
+        public Expr Expr { get; }
+        public Expr Condition { get; }
+        public Expr? Else { get; }
+    }
+
+    internal class ListExpr : Expr
+    {
+        public ListExpr(List<Expr> exprs, Position position) : base(position)
+        {
+            Exprs = exprs;
+        }
+
+        public List<Expr> Exprs { get; }
+    }
+
+    internal class IndexGetExpr : Expr
+    {
+        public IndexGetExpr(Expr indexee, Expr index, Position position) : base(position)
+        {
+            Indexee = indexee;
+            Index = index;
+        }
+
+        public Expr Indexee { get; }
+        public Expr Index { get; }
+    }
+
     internal class IfBranch
     {
         public IfBranch(Expr expr, List<Stmt> body)
@@ -185,5 +253,55 @@ namespace TOLSharp
         }
 
         public Expr? Condition { get; }
+    } 
+
+    internal class ExportStmt : Stmt
+    {
+        public ExportStmt(Expr? condition, Expr? expr, Position position) : base(position, false)
+        {
+            Condition = condition;
+            Expr = expr;
+        }
+
+        public Expr? Condition { get; }
+        public Expr? Expr { get; }
+    }
+
+    internal class ActionStmt : Stmt
+    {
+        public ActionStmt(string name, List<string> parameters, List<Stmt> body, Position position) : base(position, true)
+        {
+            Name = name;
+            Parameters = parameters;
+            Body = body;
+        }
+
+        public string Name { get;}
+        public List<string> Parameters { get; }
+        public List<Stmt> Body { get; }
+
+        public int Arity => Parameters.Count;
+    }
+
+    internal class ExprStmt : Stmt
+    {
+        public ExprStmt(Expr expr) : base(expr.Position, false)
+        {
+            Expr = expr;
+        }
+
+        public Expr Expr { get; }
+    }
+
+    internal class IndexSetStmt : Stmt
+    {
+        public IndexSetStmt(IndexGetExpr indexGetExpr, Expr expr) : base(indexGetExpr.Position, false)
+        {
+            IndexGetExpr = indexGetExpr;
+            Expr = expr;
+        }
+
+        public IndexGetExpr IndexGetExpr { get; }
+        public Expr Expr { get; }
     }
 }

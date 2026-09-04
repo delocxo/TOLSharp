@@ -1,4 +1,7 @@
-if True
-	leave if !Null;
-	x = 10 * "";
-end
+x = [100, 100]
+
+print(x)
+
+x[-1] = 10220
+
+print(x)

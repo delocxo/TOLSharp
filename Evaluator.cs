@@ -66,8 +66,57 @@ namespace TOLSharp
                 return method(left, right, binaryExpr.Position);
             }
 
+            else if (expr is CallExpr callExpr)
+                return FunctionInvoker.Invoke(callExpr.Arguments, callExpr.Callee, scope, callExpr.Position);
+
+            else if (expr is SpawnExpr spawnExpr)
+            {
+                Task<Value> task = Task.Run(() => Evaluate(spawnExpr.Expr, scope));
+                return new Value(task);
+            }
+
+            else if (expr is AwaitExpr awaitExpr)
+            {
+                Value value = Evaluate(awaitExpr.Expr, scope);
+
+                if (!value.IsKind(ValueKind.Task))
+                    throw new Error($"{value.KindName} cannot be awaited", awaitExpr.Position);
+
+                return value.Task.GetAwaiter().GetResult();
+            }
+            
+
+            else if (expr is ConditionalExpr conditionalExpr)
+            {
+                if (ExprIsTruthy(conditionalExpr.Condition, scope))
+                    return Evaluate(conditionalExpr.Expr, scope);
+
+                if (conditionalExpr.Else != null)
+                    return Evaluate(conditionalExpr.Else, scope);
+
+                return Value.Null;
+            }
+
+            else if (expr is ListExpr listExpr)
+            {
+                List<Value> values = listExpr.Exprs
+                    .Select(x => Evaluate(x, scope))
+                    .ToList();
+
+                return new Value(values);
+            }
+
+            else if (expr is IndexGetExpr indexGetExpr)
+            {
+                Value target = Evaluate(indexGetExpr.Indexee, scope);
+                Value index = Evaluate(indexGetExpr.Index, scope);
+                return ValueOperations.IndexGet(target, index, indexGetExpr.Position);
+            }
+
             throw new UnreachableException();
         }
+
+        
 
         public static bool ExprIsTruthy(Expr expr, Scope scope)
         {

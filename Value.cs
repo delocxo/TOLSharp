@@ -13,6 +13,10 @@ namespace TOLSharp
         public bool Bool { get; set; }
         public RuntimeObject? RuntimeObject { get; private set; }
         public string String => (RuntimeObject as StringObject)!.String;
+        public ActionObject ActionObject => (RuntimeObject as ActionObject)!;
+        public Task<Value> Task => (RuntimeObject as TaskObject)!.Task;
+        public NativeObject NativeObject => (RuntimeObject as NativeObject)!;
+        public ListObject ListObject => (RuntimeObject as ListObject)!;
 
         public Value(long @int)
         {
@@ -38,10 +42,36 @@ namespace TOLSharp
             RuntimeObject = new StringObject(@string);
         }
 
+        public Value(ActionObject actionObject)
+        {
+            Kind = ValueKind.Action;
+            RuntimeObject = actionObject;
+        }
+
+        public Value(Task<Value> task)
+        {
+            Kind = ValueKind.Task;
+            RuntimeObject = new TaskObject(task);
+        }
+
+        public Value(NativeObject nativeObject)
+        {
+            Kind = ValueKind.Native;
+            RuntimeObject = nativeObject;
+        }
+
+        public Value(List<Value> values)
+        {
+            Kind = ValueKind.List;
+            RuntimeObject = new ListObject(values);
+        }
+
         public static Value Null => new Value
         {
             Kind = ValueKind.Null
         };
+
+        public string KindName => ValueKind.GetName(Kind);
 
         public bool IsNumber() => Kind == ValueKind.Int || Kind == ValueKind.Float;
 
@@ -65,6 +95,18 @@ namespace TOLSharp
 
             else if (IsKind(ValueKind.Null))
                 return "null";
+
+            else if (IsKind(ValueKind.Action))
+                return $"<action {ActionObject.Name}>";
+
+            else if (IsKind(ValueKind.Task))
+                return $"<task {Task.Status.ToString().ToLower()}>";
+
+            else if (IsKind(ValueKind.Native))
+                return $"<native {NativeObject.Name}>";
+
+            else if (IsKind(ValueKind.List))
+                return $"[{string.Join(", ", ListObject.Values.Select(x => x.ToStringWithQuotes()))}]";
 
             return "INVALID TYPE";
         }

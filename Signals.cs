@@ -7,13 +7,13 @@ namespace TOLSharp
     internal class BreakSignal : Exception;
     internal class ContinueSignal : Exception;
     internal class LeaveSignal : Exception;
-    internal class ReturnSignal : Exception
+    internal class ExportSignal : Exception
     {
-        public ReturnSignal(Value? value)
+        public ExportSignal(Value value)
         {
             Value = value;
         }
 
-        public Value? Value { get; }
+        public Value Value { get; }
     }
 }

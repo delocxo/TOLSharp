@@ -36,7 +36,7 @@ namespace TOLSharp
 
         Stmt ParseStmt()
         {
-            if (Check(TokenType.Identifier))
+            if (Check(TokenType.Identifier) && Peek(TokenType.Equal))
                 return ParseIdentifier();
 
             else if (Check(TokenType.If))
@@ -54,14 +54,20 @@ namespace TOLSharp
             else if (Check(TokenType.Leave))
                 return ParseLeave();
 
-            throw ThrowUnexpected();
+            else if (Check(TokenType.Export))
+                return ParseExport();
+
+            else if (Check(TokenType.Action))
+                return ParseAction();
+
+            return ParseExprStmt();
         }
 
-        Stmt ParseIdentifier()
+        VarStmt ParseIdentifier()
         {
             Position position = Current().Position;
 
-            Expr assignee = ParsePostfix();
+            string name = ParseName();
 
             Expect(TokenType.Equal);
 
@@ -69,10 +75,27 @@ namespace TOLSharp
 
             Expect(TokenType.NewLine);
 
-            if (assignee is NameExpr nameExpr)
-                return new VarStmt(nameExpr.Name, expr, position);
+            return new VarStmt(name, expr, position);
+        }
 
-            throw new Error("Invalid assign target", position);
+        Stmt ParseExprStmt()
+        {
+            Expr expr = ParseExpr();
+
+            if (Match(TokenType.Equal))
+            {
+                Expr value = ParseExpr();
+
+                Expect(TokenType.NewLine);
+
+                if (expr is IndexGetExpr indexGetExpr)
+                    return new IndexSetStmt(indexGetExpr, value);
+
+                throw new Error("Invalid assign target", expr.Position);
+            }
+
+            Expect(TokenType.NewLine);
+            return new ExprStmt(expr);
         }
 
         IfStmt ParseIf()
@@ -179,6 +202,109 @@ namespace TOLSharp
 
             return new LeaveStmt(conditon, position);
         }
+
+        ExportStmt ParseExport()
+        {
+            Position position = Current().Position;
+
+            Next();
+
+            if (Match(TokenType.NewLine))
+                return new ExportStmt(null, null, position);
+
+            Expr? condition = TryParsePostfixIf();
+
+            if (condition != null)
+            {
+                Expect(TokenType.NewLine);
+                return new ExportStmt(condition, null, position);
+            }
+
+            SkipNewlines();
+
+            Expr expr = ParseExpr();
+
+            condition = TryParsePostfixIf();
+
+            Expect(TokenType.NewLine);
+
+            return new ExportStmt(condition, expr, position);
+        }
+
+        ActionStmt ParseAction()
+        {
+            Position position = Current().Position;
+
+            Next();
+
+            // action
+
+            SkipNewlines();
+
+            // action name
+
+            string name = ParseName();
+
+            if (Match(TokenType.NewLine))
+            {
+                /* action name
+                 * 
+                 *  end
+                */
+
+                List<Stmt> body = ParseBody();
+                return new ActionStmt(name, [], body, position);
+            }
+
+            SkipNewlines();
+
+            if (Match(TokenType.Arrow))
+            {
+                SkipNewlines();
+
+                // action name => expr
+                
+                Expr expr = ParseExpr();
+
+                ExportStmt exportStmt = new ExportStmt(null, expr, position);
+
+                Expect(TokenType.NewLine);
+
+                return new ActionStmt(name, [], [exportStmt], position);
+            }
+
+            // action name(...)
+
+            List<string> names = ParseNames(TokenType.LeftParen, TokenType.RightParen);
+
+            if (Match(TokenType.NewLine))
+            {
+                /* action name(a, b)
+                * 
+                *  end
+               */
+
+                List<Stmt> body = ParseBody();
+                return new ActionStmt(name, names, body, position);
+            }
+
+            SkipNewlines();
+
+            // action name(a, b) => expr
+
+            Expect(TokenType.Arrow);
+
+            SkipNewlines();
+
+            Expr expr1 = ParseExpr();
+
+            ExportStmt exportStmt1 = new ExportStmt(null, expr1, position);
+
+            Expect(TokenType.NewLine);
+
+            return new ActionStmt(name, names, [exportStmt1], position);
+        }
+
         Expr? TryParsePostfixIf()
         {
             if (Match(TokenType.If))
@@ -241,8 +367,17 @@ namespace TOLSharp
             return stmts;
         }
 
+        List<Stmt> ParseBody()
+        {
+            List<Stmt> body = ParseBodyUtil(TokenType.End);
+            Expect(TokenType.End);
+            return body;
+        }
+
         List<string> ParseNames(TokenType end)
         {
+            SkipNewlines();
+
             if (Match(end))
                 return new List<string>();
 
@@ -252,8 +387,12 @@ namespace TOLSharp
             };
 
             while (Match(TokenType.Comma))
+            {
                 names.Add(ParseName());
+                SkipNewlines();
+            }
 
+            SkipNewlines();
             Expect(end);
 
             return names;
@@ -269,6 +408,8 @@ namespace TOLSharp
         {
             Expect(start);
 
+            SkipNewlines();
+
             if (Match(end))
                 return new List<Expr>();
 
@@ -278,7 +419,10 @@ namespace TOLSharp
             };
 
             while (Match(TokenType.Comma))
-                args.Add(ParseExpr());
+            { 
+                args.Add(ParseExpr()); 
+                SkipNewlines();
+            }
 
             Expect(end);
 
@@ -289,6 +433,14 @@ namespace TOLSharp
         {
             for (int i = 0; i < types.Length; i++)
                 if (Current().TokenType == types[i])
+                    return true;
+            return false;
+        }
+
+        bool Peek(params TokenType[] types)
+        {
+            for (int i = 0; i < types.Length; i++)
+                if (PeekNotAtEnd() && _tokens[_i + 1].TokenType == types[i])
                     return true;
             return false;
         }
@@ -381,17 +533,74 @@ namespace TOLSharp
                 Expect(TokenType.RightParen);
                 return expr;
             }
+            else if (Match(TokenType.Spawn))
+            {
+                SkipNewlines();
 
-            throw new Error("Invalid expression", token.Position);
+                Expr expr = ParseExpr();
+
+                return new SpawnExpr(expr, token.Position);
+            }
+            else if (Match(TokenType.Await))
+            {
+                SkipNewlines();
+
+                Expr expr = ParseExpr();
+
+                return new AwaitExpr(expr, token.Position);
+            }
+            else if (Check(TokenType.LeftBracket))
+            {
+                SkipNewlines();
+
+                List<Expr> exprs = ParseArgs(TokenType.LeftBracket, TokenType.RightBracket);
+
+                return new ListExpr(exprs, token.Position);
+            }
+
+            throw ThrowUnexpected();
         }
 
         Expr ParsePostfix()
         {
             Expr left = ParsePrimary();
-            //while (Check(TokenType.LeftParen, TokenType.LeftBracket, TokenType.Period))
-            //{
-            //    break;
-            //}
+
+            while (Check(TokenType.LeftParen, TokenType.LeftBracket))
+            {
+                if (Check(TokenType.LeftParen))
+                {
+                    Position position = left.Position;
+
+                    SkipNewlines();
+
+                    List<Expr> arguments = ParseArgs(TokenType.LeftParen, TokenType.RightParen);
+
+                    left = new CallExpr(left, arguments, position);
+
+                    continue;
+                }
+
+                if (Check(TokenType.LeftBracket))
+                {
+                    Position position = left.Position;
+
+                    Next();
+
+                    SkipNewlines();
+
+                    Expr index = ParseExpr();
+
+                    SkipNewlines();
+
+                    Expect(TokenType.RightBracket);
+
+                    left = new IndexGetExpr(left, index, position);
+
+                    continue;
+                }
+
+                break;
+            }
             return left;
         }
 
@@ -525,7 +734,30 @@ namespace TOLSharp
             return left;
         }
 
-        Expr ParseExpr() => ParseOr();
+        Expr ParseExpr()
+        {
+            Expr expr = ParseOr();
+
+            if (Match(TokenType.If))
+            {
+                SkipNewlines();
+
+                Expr condition = ParseOr();
+
+                Expr? elseExpr = null;
+
+                if (Match(TokenType.Else))
+                {
+                    SkipNewlines();
+
+                    elseExpr = ParseExpr();
+                }
+
+                return new ConditionalExpr(expr, condition, elseExpr, expr.Position);
+            }
+
+            return expr;
+        }
 
         void SkipNewlines()
         {

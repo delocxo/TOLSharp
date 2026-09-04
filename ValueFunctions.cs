@@ -25,6 +25,18 @@ namespace TOLSharp
             if (left.Kind == ValueKind.Null && right.Kind == ValueKind.Null)
                 return true;
 
+            if (left.IsKind(ValueKind.Action) && right.IsKind(ValueKind.Action))
+                return left.ActionObject == right.ActionObject;
+
+            if (left.IsKind(ValueKind.Task) && right.IsKind(ValueKind.Task))
+                return left.Task == right.Task;
+
+            if (left.IsKind(ValueKind.Native) && right.IsKind(ValueKind.Native))
+                return left.NativeObject == right.NativeObject;
+
+            if (left.IsKind(ValueKind.List) && right.IsKind(ValueKind.List))
+                return left.ListObject == right.ListObject;
+
             return false;
         }
 

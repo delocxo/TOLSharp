@@ -27,6 +27,11 @@ namespace TOLSharp
         public static int String = Register("string");
         public static int Bool = Register("bool");
         public static int Null = Register("null");
+        public static int Action = Register("action");
+        public static int Task = Register("task");
+        public static int Native = Register("native");
+        public static int BoundNative = Register("bound native");
+        public static int List = Register("list");
 
         public static int Register(string name)
         {

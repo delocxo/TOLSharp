@@ -1,19 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TOLSharp.Common;
+using TOLSharp.Compiler;
+using TOLSharp.Runtime.Values;
 
-namespace TOLSharp
+namespace TOLSharp.Runtime
 {
     internal static class FunctionInvoker
     {
-        public static Value Invoke(List<Expr> arguments, Expr callee, Scope scope, Position position)
+        public static Value Invoke(Value target, List<Value> values, Position position)
         {
-            List<Value> values = arguments
-                .Select(x => Evaluator.Evaluate(x, scope))
-                .ToList();
-
-            Value target = Evaluator.Evaluate(callee, scope);
-
             if (target.IsKind(ValueKind.Action))
             {
                 ActionObject actionObject = target.ActionObject;
@@ -44,7 +41,7 @@ namespace TOLSharp
                 if (!nativeObject.Overloads.TryGetValue(values.Count, out var actionOverload))
                     throw new Error($"No overload of '{nativeObject.Name}' takes {values.Count} argument(s)", position);
 
-                return actionOverload.Native(values, null, position);
+                return actionOverload.Native(values, position);
             }
 
             throw new Error($"{target.KindName} not callable", position);

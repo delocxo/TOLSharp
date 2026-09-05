@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TOLSharp.Common;
+using TOLSharp.Runtime.Values;
 
-namespace TOLSharp
+namespace TOLSharp.Runtime
 {
     internal class Scope
     {
-        Dictionary<string, Value> _locals = new Dictionary<string, Value>();
+        public Dictionary<string, Value> Locals { get; } = new Dictionary<string, Value>();
         Scope? _parent;
 
         bool AtTopLevel => _parent == null;
@@ -20,19 +22,19 @@ namespace TOLSharp
         {
             if (TryGetLocal(name, out Value value1))
                 VerfiyName(name, value1, position);
-            _locals[name] = value;
+            Locals[name] = value;
         }
 
         public void DefineNoPosition(string name, Value value)
         {
             if (TryGetLocal(name, out Value value1))
                 VerfiyName(name, value1, null);
-            _locals[name] = value;
+            Locals[name] = value;
         }
 
         public Value Get(string name, Position position)
         {
-            if (_locals.TryGetValue(name, out Value value))
+            if (Locals.TryGetValue(name, out Value value))
                 return value;
 
             if (_parent != null)
@@ -41,7 +43,7 @@ namespace TOLSharp
             throw new Error($"'{name}' is not defined", position);
         }
 
-        public bool TryGetLocal(string name, out Value value) => _locals.TryGetValue(name, out value);
+        public bool TryGetLocal(string name, out Value value) => Locals.TryGetValue(name, out value);
 
         void VerfiyName(string name, Value value, Position? position)
         {

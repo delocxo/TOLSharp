@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TOLSharp.Common;
 
-namespace TOLSharp
+namespace TOLSharp.Compiler
 {
     internal abstract class Expr
     {
@@ -163,6 +164,18 @@ namespace TOLSharp
 
         public Expr Indexee { get; }
         public Expr Index { get; }
+    }
+
+    internal class MemberGetExpr : Expr
+    {
+        public MemberGetExpr(Expr target, string memberName, Position position) : base(position)
+        {
+            Target = target;
+            MemberName = memberName;
+        }
+
+        public Expr Target { get; }
+        public string MemberName { get; }
     }
 
     internal class IfBranch

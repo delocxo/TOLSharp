@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TOLSharp.Common;
+using TOLSharp.Compiler;
+using TOLSharp.Runtime.Natives;
+using TOLSharp.Runtime.Values;
 
-namespace TOLSharp
+namespace TOLSharp.Runtime
 {
     internal static class RuntimeDeclarations
     {
@@ -40,16 +44,13 @@ namespace TOLSharp
 
                 NativeObject nativeObject = existing.NativeObject;
 
-                if (nativeObject.Overloads.ContainsKey(arity))
-                    throw new InvalidOperationException($"Duplicate overload for '{name}' with {arity} parameter(s)");
-
-                existing.NativeObject.Overloads[arity] = overload;
+                nativeObject.AddOverload(overload);
                 return;
             }
 
             NativeObject nativeObject1 = new NativeObject(name);
 
-            nativeObject1.Overloads[arity] = overload;
+            nativeObject1.AddOverload(overload);
 
             if (position != null)
                 scope.Define(name, new Value(nativeObject1), position.Value);

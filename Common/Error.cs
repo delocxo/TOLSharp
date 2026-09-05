@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace TOLSharp
+namespace TOLSharp.Common
 {
     internal struct Position
     {

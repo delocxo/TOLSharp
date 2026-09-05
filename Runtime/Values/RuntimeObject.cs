@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Xml.Linq;
 
-namespace TOLSharp
+namespace TOLSharp.Runtime.Values
 {
     internal abstract class RuntimeObject;
     internal class StringObject : RuntimeObject
@@ -46,6 +47,14 @@ namespace TOLSharp
         public string Name { get; }
 
         public Dictionary<int, NativeOverload> Overloads { get; } = [];
+
+        public void AddOverload(NativeOverload nativeOverload)
+        {
+            if (Overloads.ContainsKey(nativeOverload.Arity))
+                throw new InvalidOperationException($"Duplicate overload for '{Name}' with {nativeOverload.Arity} parameter(s)");
+
+            Overloads[nativeOverload.Arity] = nativeOverload;
+        }
     }
 
     internal class ListObject : RuntimeObject

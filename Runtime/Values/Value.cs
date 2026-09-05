@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
+using TOLSharp.Common;
 
-namespace TOLSharp
+namespace TOLSharp.Runtime.Values
 {
     internal struct Value
     {
@@ -78,6 +79,14 @@ namespace TOLSharp
         public double AsFloat() => Kind == ValueKind.Int ? Int : Float;
 
         public bool IsKind(int kind) => Kind == kind;
+
+        public Value Expect(int kind, string message, Position position)
+        {
+            if (!IsKind(kind))
+                throw new Error(message, position);
+
+            return this;
+        }
 
         public override string ToString()
         {

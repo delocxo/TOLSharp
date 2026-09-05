@@ -1,4 +1,6 @@
-﻿namespace TOLSharp
+﻿using TOLSharp.Runtime;
+
+namespace TOLSharp
 {
     internal class Program
     {

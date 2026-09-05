@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TOLSharp.Common;
+using TOLSharp.Compiler;
+using TOLSharp.Runtime.Natives;
+using TOLSharp.Runtime.Values;
 
-namespace TOLSharp
+namespace TOLSharp.Runtime
 {
     internal static class Intepreter
     {

@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TOLSharp.Compiler;
+using TOLSharp.Runtime;
+using TOLSharp.Runtime.Natives;
 
-namespace TOLSharp
+namespace TOLSharp.Runtime.Values
 {
     internal class ActionOverload
     {

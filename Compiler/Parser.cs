@@ -4,8 +4,9 @@ using System.Globalization;
 using System.Linq.Expressions;
 using System.Text;
 using System.Xml.Linq;
+using TOLSharp.Common;
 
-namespace TOLSharp
+namespace TOLSharp.Compiler
 {
     internal class Parser
     {
@@ -565,7 +566,7 @@ namespace TOLSharp
         {
             Expr left = ParsePrimary();
 
-            while (Check(TokenType.LeftParen, TokenType.LeftBracket))
+            while (Check(TokenType.LeftParen, TokenType.LeftBracket, TokenType.Period))
             {
                 if (Check(TokenType.LeftParen))
                 {
@@ -595,6 +596,21 @@ namespace TOLSharp
                     Expect(TokenType.RightBracket);
 
                     left = new IndexGetExpr(left, index, position);
+
+                    continue;
+                }
+
+                if (Check(TokenType.Period))
+                {
+                    Position position = left.Position;
+
+                    Next();
+
+                    SkipNewlines();
+
+                    string memberName = ParseName();
+
+                    left = new MemberGetExpr(left, memberName, position);
 
                     continue;
                 }

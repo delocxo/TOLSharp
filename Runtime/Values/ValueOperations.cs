@@ -2,8 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using TOLSharp.Common;
+using TOLSharp.Compiler;
+using TOLSharp.Runtime;
+using TOLSharp.Runtime.Natives;
 
-namespace TOLSharp
+namespace TOLSharp.Runtime.Values
 {
     internal static class ValueOperations
     {
@@ -258,6 +262,14 @@ namespace TOLSharp
 
                 list.Values[(int)rawIndex] = value;
             }
+        }
+
+        public static Value GetMember(Value target, string memberName, Position position)
+        {
+            if (MemberRegistery.Registery.TryGetValue(target.Kind, out var nativeMembers))
+                return nativeMembers.GetMember(target, memberName, position);
+
+            throw new Error($"{target.KindName} has no members to accessed", position);
         }
 
         static Error UnaryError(Value value, string @operator, Position position)

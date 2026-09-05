@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using TOLSharp.Common;
+using TOLSharp.Compiler;
+using TOLSharp.Runtime.Values;
 
-namespace TOLSharp
+namespace TOLSharp.Runtime
 {
     internal static class Evaluator
     {
@@ -67,7 +70,14 @@ namespace TOLSharp
             }
 
             else if (expr is CallExpr callExpr)
-                return FunctionInvoker.Invoke(callExpr.Arguments, callExpr.Callee, scope, callExpr.Position);
+            {
+                Value target = Evaluate(callExpr.Callee, scope);
+                return FunctionInvoker.Invoke(target, 
+                    callExpr.Arguments
+                        .Select(x => Evaluate(x, scope))
+                        .ToList(), 
+                    callExpr.Position);
+            }
 
             else if (expr is SpawnExpr spawnExpr)
             {
@@ -111,6 +121,12 @@ namespace TOLSharp
                 Value target = Evaluate(indexGetExpr.Indexee, scope);
                 Value index = Evaluate(indexGetExpr.Index, scope);
                 return ValueOperations.IndexGet(target, index, indexGetExpr.Position);
+            }
+            
+            else if (expr is MemberGetExpr memberGetExpr)
+            {
+                Value target = Evaluate(memberGetExpr.Target, scope);
+                return ValueOperations.GetMember(target, memberGetExpr.MemberName, memberGetExpr.Position);
             }
 
             throw new UnreachableException();
